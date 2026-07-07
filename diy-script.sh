@@ -17,6 +17,7 @@ git_sparse_clone() {
 rm -rf feeds/luci/themes/luci-theme-argon
 rm -rf feeds/luci/applications/luci-app-passwall
 rm -rf feeds/luci/applications/luci-app-ssr-plus
+rm -rf feeds/packages/net/{xray-core,sing-box,chinadns-ng,dns2socks,geoview,shadowsocks-rust,shadowsocksr-libev,v2ray-plugin}
 
 # SSR Plus
 git clone --depth=1 -b main https://github.com/fw876/helloworld package/helloworld
