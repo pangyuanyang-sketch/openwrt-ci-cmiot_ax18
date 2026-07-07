@@ -21,6 +21,10 @@ rm -rf feeds/packages/net/{xray-core,sing-box,chinadns-ng,dns2socks,geoview,shad
 
 # SSR Plus
 git clone --depth=1 -b main https://github.com/fw876/helloworld package/helloworld
+# 修复 shadowsocksr-libev 源码包哈希校验失败
+if [ -f package/helloworld/shadowsocksr-libev/Makefile ]; then
+  sed -i 's/34308ed827a5dd4f4e35619914102d55b00604faa44fda051d1d25fb4a319325/146fa4511a52da2aaa1e11ea0294cfb450e62643156c5da3b10e037ef43961f6/g' package/helloworld/shadowsocksr-libev/Makefile
+fi
 
 # PassWall
 git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall-packages package/openwrt-passwall-packages
