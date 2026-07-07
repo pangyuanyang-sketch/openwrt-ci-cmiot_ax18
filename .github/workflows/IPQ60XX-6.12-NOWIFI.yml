@@ -3,6 +3,9 @@ name: IPQ60XX-6.12-NOWIFI
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   REPO_URL: https://github.com/LiBwrt/openwrt-6.x.git
   REPO_BRANCH: main-nss
