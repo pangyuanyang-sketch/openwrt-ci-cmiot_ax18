@@ -13,26 +13,31 @@ git_sparse_clone() {
   cd .. && rm -rf "$repodir"
 }
 
-# 移除要替换的包
+# 移除要替换的主题
 rm -rf feeds/luci/themes/luci-theme-argon
-rm -rf feeds/luci/applications/luci-app-passwall
-rm -rf feeds/luci/applications/luci-app-ssr-plus
-rm -rf feeds/packages/net/{xray-core,sing-box,chinadns-ng,dns2socks,geoview,shadowsocks-rust,shadowsocksr-libev,v2ray-plugin}
 
-# SSR Plus
-git clone --depth=1 -b dev https://github.com/fw876/helloworld package/helloworld
+# SSR Plus（已禁用，保留配置便于以后恢复）
+# rm -rf feeds/luci/applications/luci-app-ssr-plus
+# rm -rf feeds/packages/net/{xray-core,sing-box,chinadns-ng,dns2socks,geoview,shadowsocks-rust,shadowsocksr-libev,v2ray-plugin}
+# git clone --depth=1 -b dev https://github.com/fw876/helloworld package/helloworld
 
-# PassWall
-git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall-packages package/openwrt-passwall-packages
-git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall package/luci-app-passwall
+# PassWall（已禁用，保留配置便于以后恢复）
+# rm -rf feeds/luci/applications/luci-app-passwall
+# git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall-packages package/openwrt-passwall-packages
+# git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall package/luci-app-passwall
+
+# Nikki 官方 feed（LiBwrt main-nss 上游未内置）
+if ! grep -q '^src-git nikki ' feeds.conf.default; then
+  echo 'src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main' >> feeds.conf.default
+fi
 
 # Themes，只保留 Argon
 git clone --depth=1 -b 18.06 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
 git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
 
-# iStore
-git_sparse_clone main https://github.com/linkease/istore-ui app-store-ui
-git_sparse_clone main https://github.com/linkease/istore luci
+# iStore（已禁用，保留配置便于以后恢复）
+# git_sparse_clone main https://github.com/linkease/istore-ui app-store-ui
+# git_sparse_clone main https://github.com/linkease/istore luci
 
 if [ -f "$GITHUB_WORKSPACE/images/bg1.jpg" ] && [ -d package/luci-theme-argon/htdocs/luci-static/argon/img ]; then
   cp -f "$GITHUB_WORKSPACE/images/bg1.jpg" package/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
