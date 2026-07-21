@@ -13,9 +13,6 @@ git_sparse_clone() {
   cd .. && rm -rf "$repodir"
 }
 
-# 移除要替换的主题
-rm -rf feeds/luci/themes/luci-theme-argon
-
 # SSR Plus（已禁用，保留配置便于以后恢复）
 # rm -rf feeds/luci/applications/luci-app-ssr-plus
 # rm -rf feeds/packages/net/{xray-core,sing-box,chinadns-ng,dns2socks,geoview,shadowsocks-rust,shadowsocksr-libev,v2ray-plugin}
@@ -31,17 +28,11 @@ if ! grep -q '^src-git nikki ' feeds.conf.default; then
   echo 'src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main' >> feeds.conf.default
 fi
 
-# Themes，只保留 Argon
-git clone --depth=1 -b 18.06 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
-git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
+# Argon 使用 LuCI feed 自带版本，确保与当前 Ucode 模板引擎兼容
 
 # iStore（已禁用，保留配置便于以后恢复）
 # git_sparse_clone main https://github.com/linkease/istore-ui app-store-ui
 # git_sparse_clone main https://github.com/linkease/istore luci
-
-if [ -f "$GITHUB_WORKSPACE/images/bg1.jpg" ] && [ -d package/luci-theme-argon/htdocs/luci-static/argon/img ]; then
-  cp -f "$GITHUB_WORKSPACE/images/bg1.jpg" package/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
-fi
 
 # 设置 Argon 为默认主题
 mkdir -p package/base-files/files/etc/uci-defaults
@@ -81,8 +72,10 @@ find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -r -i sed -i 's/..\/..\/l
 find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -r -i sed -i 's/PKG_SOURCE_URL:=@GHREPO/PKG_SOURCE_URL:=https:\/\/github.com/g' {}
 find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -r -i sed -i 's/PKG_SOURCE_URL:=@GHCODELOAD/PKG_SOURCE_URL:=https:\/\/codeload.github.com/g' {}
 
-# 取消主题默认设置
-find package/luci-theme-*/* -type f -name '*luci-theme-*' -print -exec sed -i '/set luci.main.mediaurlbase/d' {} \;
-
 ./scripts/feeds update -a
 ./scripts/feeds install -a
+
+# feeds 最终更新后再替换背景，避免自定义图片被覆盖
+if [ -f "$GITHUB_WORKSPACE/images/bg1.jpg" ] && [ -d feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img ]; then
+  cp -f "$GITHUB_WORKSPACE/images/bg1.jpg" feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
+fi
