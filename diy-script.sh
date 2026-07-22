@@ -73,6 +73,12 @@ find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -r -i sed -i 's/PKG_SOURC
 find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -r -i sed -i 's/PKG_SOURCE_URL:=@GHCODELOAD/PKG_SOURCE_URL:=https:\/\/codeload.github.com/g' {}
 
 ./scripts/feeds update -a
+
+# 25.12 的 Kconfig 会把两个 Mihomo provider 的 CONFLICTS 解析成循环依赖；
+# Nikki 固件只使用稳定版 mihomo-meta，因此在生成包索引前排除 alpha 变体。
+rm -rf feeds/nikki/mihomo-alpha package/feeds/nikki/mihomo-alpha
+./scripts/feeds update -i nikki
+
 ./scripts/feeds install -a
 
 # feeds 最终更新后再替换背景，避免自定义图片被覆盖
