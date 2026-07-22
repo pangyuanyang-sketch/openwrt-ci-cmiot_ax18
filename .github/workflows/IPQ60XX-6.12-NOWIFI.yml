@@ -75,7 +75,12 @@ jobs:
 
     - name: Generate Variables(生成变量)
       run: |
-        cp $CONFIG_FILE $OPENWRT_PATH/.config
+        test -f "$GITHUB_WORKSPACE/$CONFIG_FILE" || {
+          echo "原始编译配置不存在: $GITHUB_WORKSPACE/$CONFIG_FILE" >&2
+          exit 1
+        }
+        cp "$GITHUB_WORKSPACE/$CONFIG_FILE" "$RUNNER_TEMP/openwrt.config"
+        cp "$RUNNER_TEMP/openwrt.config" "$OPENWRT_PATH/.config"
         cd $OPENWRT_PATH
         make defconfig > /dev/null 2>&1
         SOURCE_REPO="$(echo $REPO_URL | awk -F '/' '{print $(NF)}')"
@@ -102,7 +107,11 @@ jobs:
     - name: Load Custom Configuration(加载自定义配置)
       run: |
         [ -e files ] && mv files $OPENWRT_PATH/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE $OPENWRT_PATH/.config
+        test -f "$RUNNER_TEMP/openwrt.config" || {
+          echo "保存的原始编译配置丢失: $RUNNER_TEMP/openwrt.config" >&2
+          exit 1
+        }
+        cp "$RUNNER_TEMP/openwrt.config" "$OPENWRT_PATH/.config"
         chmod +x $DIY_SCRIPT
         cd $OPENWRT_PATH
         $GITHUB_WORKSPACE/$DIY_SCRIPT
