@@ -110,7 +110,11 @@ jobs:
     - name: Download DL Package(下载DL软件包)
       run: |
         cd $OPENWRT_PATH
+        echo "===== Nikki config before defconfig ====="
+        grep -E 'CONFIG_PACKAGE_(mihomo|nikki|luci-app-nikki|luci-i18n-nikki|yq)' .config || true
         make defconfig
+        echo "===== Nikki config after defconfig ====="
+        grep -E 'CONFIG_PACKAGE_(mihomo|nikki|luci-app-nikki|luci-i18n-nikki|yq)' .config || true
         required_packages=(
           mihomo-meta
           nikki
@@ -131,7 +135,7 @@ jobs:
           if ! grep -qxF "CONFIG_PACKAGE_${package}=y" .config; then
             echo "Nikki 必需包被 defconfig 取消或不可用: ${package}" >&2
             echo "===== ${package} Kconfig =====" >&2
-            sed -n "/^config PACKAGE_${package}$/,/^config PACKAGE_/p" tmp/.config-package.in | head -80 >&2 || true
+            sed -n "/^[[:space:]]*config PACKAGE_${package}$/,/^[[:space:]]*config PACKAGE_/p" tmp/.config-package.in | head -80 >&2 || true
             echo "===== ${package} package metadata =====" >&2
             grep -n -A30 -B5 "^Package: ${package}$" tmp/.packageinfo >&2 || true
             echo "===== target architecture =====" >&2
