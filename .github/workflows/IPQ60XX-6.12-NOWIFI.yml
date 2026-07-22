@@ -130,6 +130,12 @@ jobs:
         for package in "${required_packages[@]}"; do
           if ! grep -qxF "CONFIG_PACKAGE_${package}=y" .config; then
             echo "Nikki 必需包被 defconfig 取消或不可用: ${package}" >&2
+            echo "===== ${package} Kconfig =====" >&2
+            sed -n "/^config PACKAGE_${package}$/,/^config PACKAGE_/p" tmp/.config-package.in | head -80 >&2 || true
+            echo "===== ${package} package metadata =====" >&2
+            grep -n -A30 -B5 "^Package: ${package}$" tmp/.packageinfo >&2 || true
+            echo "===== target architecture =====" >&2
+            grep -E '^CONFIG_(aarch64|ARCH|TARGET_ARCH_PACKAGES|USE_MUSL|BROKEN)' .config >&2 || true
             exit 1
           fi
         done
