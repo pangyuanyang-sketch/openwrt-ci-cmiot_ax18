@@ -75,7 +75,12 @@ jobs:
 
     - name: Generate Variables(生成变量)
       run: |
-        cp $CONFIG_FILE $OPENWRT_PATH/.config
+        test -f "$GITHUB_WORKSPACE/$CONFIG_FILE" || {
+          echo "原始编译配置不存在: $GITHUB_WORKSPACE/$CONFIG_FILE" >&2
+          exit 1
+        }
+        cp "$GITHUB_WORKSPACE/$CONFIG_FILE" "$RUNNER_TEMP/openwrt.config"
+        cp "$RUNNER_TEMP/openwrt.config" "$OPENWRT_PATH/.config"
         cd $OPENWRT_PATH
         make defconfig > /dev/null 2>&1
         SOURCE_REPO="$(echo $REPO_URL | awk -F '/' '{print $(NF)}')"
@@ -102,15 +107,26 @@ jobs:
     - name: Load Custom Configuration(加载自定义配置)
       run: |
         [ -e files ] && mv files $OPENWRT_PATH/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE $OPENWRT_PATH/.config
+        test -f "$RUNNER_TEMP/openwrt.config" || {
+          echo "保存的原始编译配置丢失: $RUNNER_TEMP/openwrt.config" >&2
+          exit 1
+        }
+        cp "$RUNNER_TEMP/openwrt.config" "$OPENWRT_PATH/.config"
         chmod +x $DIY_SCRIPT
         cd $OPENWRT_PATH
         $GITHUB_WORKSPACE/$DIY_SCRIPT
+        # feeds update/install 会在 Nikki 元数据就绪前刷新配置，
+        # 因此必须在 DIY 完成后再恢复一次原始选项。
+        cp "$RUNNER_TEMP/openwrt.config" "$OPENWRT_PATH/.config"
 
     - name: Download DL Package(下载DL软件包)
       run: |
         cd $OPENWRT_PATH
+        echo "===== Nikki config before defconfig ====="
+        grep -E 'CONFIG_PACKAGE_(mihomo|nikki|luci-app-nikki|luci-i18n-nikki|yq)' .config || true
         make defconfig
+        echo "===== Nikki config after defconfig ====="
+        grep -E 'CONFIG_PACKAGE_(mihomo|nikki|luci-app-nikki|luci-i18n-nikki|yq)' .config || true
         required_packages=(
           mihomo-meta
           nikki
@@ -130,6 +146,12 @@ jobs:
         for package in "${required_packages[@]}"; do
           if ! grep -qxF "CONFIG_PACKAGE_${package}=y" .config; then
             echo "Nikki 必需包被 defconfig 取消或不可用: ${package}" >&2
+            echo "===== ${package} Kconfig =====" >&2
+            sed -n "/^[[:space:]]*config PACKAGE_${package}$/,/^[[:space:]]*config PACKAGE_/p" tmp/.config-package.in | head -80 >&2 || true
+            echo "===== ${package} package metadata =====" >&2
+            grep -n -A30 -B5 "^Package: ${package}$" tmp/.packageinfo >&2 || true
+            echo "===== target architecture =====" >&2
+            grep -E '^CONFIG_(aarch64|ARCH|TARGET_ARCH_PACKAGES|USE_MUSL|BROKEN)' .config >&2 || true
             exit 1
           fi
         done
