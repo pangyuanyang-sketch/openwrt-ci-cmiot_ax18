@@ -81,6 +81,19 @@ rm -rf feeds/nikki/mihomo-alpha package/feeds/nikki/mihomo-alpha
 
 ./scripts/feeds install -a
 
+# 内置 Mihomo 轻量 GeoIP 数据库；保留标准文件名，首次启动无需联网下载。
+geoip_tmp_dir="$(mktemp -d)"
+geoip_lite_url="https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip-lite.metadb"
+if ! curl -fL --retry 3 --retry-delay 2 -o "$geoip_tmp_dir/geoip-lite.metadb" "$geoip_lite_url" || \
+   ! curl -fL --retry 3 --retry-delay 2 -o "$geoip_tmp_dir/geoip-lite.metadb.sha256sum" "$geoip_lite_url.sha256sum" || \
+   ! (cd "$geoip_tmp_dir" && sha256sum -c geoip-lite.metadb.sha256sum); then
+  echo "下载或校验 geoip-lite.metadb 失败" >&2
+  rm -rf "$geoip_tmp_dir"
+  exit 1
+fi
+install -Dm0644 "$geoip_tmp_dir/geoip-lite.metadb" files/etc/nikki/run/geoip.metadb
+rm -rf "$geoip_tmp_dir"
+
 # feeds 最终更新后再替换背景，避免自定义图片被覆盖
 if [ -f "$GITHUB_WORKSPACE/images/bg1.jpg" ] && [ -d feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img ]; then
   cp -f "$GITHUB_WORKSPACE/images/bg1.jpg" feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
