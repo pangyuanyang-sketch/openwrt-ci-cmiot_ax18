@@ -23,7 +23,7 @@ git_sparse_clone() {
 # git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall-packages package/openwrt-passwall-packages
 # git clone --depth=1 https://github.com/Openwrt-Passwall/openwrt-passwall package/luci-app-passwall
 
-# Nikki 官方 feed（LiBwrt main-nss 上游未内置）
+# Nikki 官方 feed（LiBwrt 源码未内置）
 if ! grep -q '^src-git nikki ' feeds.conf.default; then
   echo 'src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main' >> feeds.conf.default
 fi
