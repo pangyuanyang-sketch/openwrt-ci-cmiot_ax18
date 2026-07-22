@@ -115,6 +115,9 @@ jobs:
         chmod +x $DIY_SCRIPT
         cd $OPENWRT_PATH
         $GITHUB_WORKSPACE/$DIY_SCRIPT
+        # feeds update/install 会在 Nikki 元数据就绪前刷新配置，
+        # 因此必须在 DIY 完成后再恢复一次原始选项。
+        cp "$RUNNER_TEMP/openwrt.config" "$OPENWRT_PATH/.config"
 
     - name: Download DL Package(下载DL软件包)
       run: |
