@@ -74,12 +74,27 @@ find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -r -i sed -i 's/PKG_SOURC
 
 ./scripts/feeds update -a
 
-# 25.12 的 Kconfig 会把两个 Mihomo provider 的 CONFLICTS 解析成循环依赖；
-# Nikki 固件只使用稳定版 mihomo-meta，因此在生成包索引前排除 alpha 变体。
+# 25.12 的 Kconfig 会把 Mihomo 虚拟包和两个 provider 的 CONFLICTS
+# 解析成不可选依赖，导致 make defconfig 静默取消整条 Nikki 依赖链。
+# 固件只使用稳定版 mihomo-meta：排除 alpha、去掉无效冲突声明，
+# 并把 Nikki 的虚拟依赖明确绑定到 mihomo-meta。
 rm -rf feeds/nikki/mihomo-alpha package/feeds/nikki/mihomo-alpha
+sed -i '/^[[:space:]]*CONFLICTS:=mihomo-alpha[[:space:]]*$/d' feeds/nikki/mihomo-meta/Makefile
+sed -i 's/+mihomo[[:space:]]*$/+mihomo-meta/' feeds/nikki/nikki/Makefile
 ./scripts/feeds update -i nikki
 
 ./scripts/feeds install -a
+
+# 在 defconfig 前先确认 Nikki 的三个源包确实已安装到构建树。
+for nikki_makefile in \
+  package/feeds/nikki/mihomo-meta/Makefile \
+  package/feeds/nikki/nikki/Makefile \
+  package/feeds/nikki/luci-app-nikki/Makefile; do
+  if [ ! -e "$nikki_makefile" ]; then
+    echo "Nikki 依赖包未安装: $nikki_makefile" >&2
+    exit 1
+  fi
+done
 
 # 内置 Mihomo 轻量 GeoIP 数据库；保留标准文件名，首次启动无需联网下载。
 geoip_tmp_dir="$(mktemp -d)"
